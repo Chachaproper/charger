@@ -1,0 +1,22 @@
+{
+  "name": "charger",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsc -p . && node ./dist/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "battery-level": "3.0.0",
+    "is-charging": "2.0.0",
+    "node-notifier": "6.0.0",
+    "typescript": "3.7.4"
+  },
+  "devDependencies": {
+    "@types/battery-level": "3.0.0",
+    "@types/is-charging": "2.0.0",
+    "@types/node-notifier": "5.4.0"
+  }
+}
