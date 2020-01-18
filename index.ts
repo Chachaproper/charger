@@ -1,11 +1,53 @@
+import http, { RequestOptions } from 'http'
+import qs from 'querystring'
 import nodeNotifier from 'node-notifier'
 import batteryLevel from 'battery-level'
 import isCharging from 'is-charging'
 
-const stopCharging = (level: number, chargingStatus: boolean) => {
+const IP = '192.168.88.229'
+const PORT = 80
+const USER = 'user'
+const PASSWORD = 'password'
+
+const send = (enabled: boolean = false): Promise<any> => {
+  const body =  qs.encode({ btnpwr: enabled ? 'on' : 'off' })
+
+  const options: RequestOptions = {
+    hostname: IP,
+    port: PORT,
+    path: '/index.html',
+    method: 'POST',
+    headers: {
+      'Content-Length': body.length,
+      'Authorization': `Basic ${new Buffer(`${USER}:${PASSWORD}`).toString('base64')}`,
+    },
+  }
+
+  return new Promise((resolve, reject) => {
+    const req = http.request(options, () => {
+      return resolve()
+    })
+
+    req.on('error', (err) => {
+      nodeNotifier.notify({
+        title: `Request error: ${err.name}`,
+        message: err.message,
+      })
+
+      return reject(err)
+    })
+
+    req.write(body)
+    req.end()
+  })
+}
+
+const stopCharging = async (level: number, chargingStatus: boolean) => {
   if (!chargingStatus) {
     return
   }
+
+  await send(false)
 
   nodeNotifier.notify({
     title: 'Stop charging',
@@ -13,10 +55,12 @@ const stopCharging = (level: number, chargingStatus: boolean) => {
   })
 }
 
-const startCharging = (level: number, chargingStatus: boolean) => {
-  if (!chargingStatus) {
+const startCharging = async (level: number, chargingStatus: boolean) => {
+  if (chargingStatus) {
     return
   }
+
+  await send(true)
 
   nodeNotifier.notify({
     title: 'Battery status',
