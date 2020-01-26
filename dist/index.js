@@ -14,13 +14,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_1 = __importDefault(require("http"));
 const querystring_1 = __importDefault(require("querystring"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const node_notifier_1 = __importDefault(require("node-notifier"));
 const battery_level_1 = __importDefault(require("battery-level"));
 const is_charging_1 = __importDefault(require("is-charging"));
-const IP = '192.168.88.229';
-const PORT = 80;
-const USER = 'user';
-const PASSWORD = 'password';
+dotenv_1.default.config();
+const IP = process.env.HOST || '192.168.88.229';
+const PORT = process.env.PORT || 80;
+const LOGIN = process.env.LOGIN || 'user';
+const PASSWORD = process.env.PASSWORD || 'password';
+console.log(IP, PORT, LOGIN, PASSWORD);
 const send = (enabled = false) => {
     const body = querystring_1.default.encode({ btnpwr: enabled ? 'on' : 'off' });
     const options = {
@@ -30,7 +33,7 @@ const send = (enabled = false) => {
         method: 'POST',
         headers: {
             'Content-Length': body.length,
-            'Authorization': `Basic ${new Buffer(`${USER}:${PASSWORD}`).toString('base64')}`,
+            'Authorization': `Basic ${new Buffer(`${LOGIN}:${PASSWORD}`).toString('base64')}`,
         },
     };
     return new Promise((resolve, reject) => {
@@ -53,6 +56,7 @@ const stopCharging = (level, chargingStatus) => __awaiter(void 0, void 0, void 0
         return;
     }
     yield send(false);
+    console.log(`${new Date()} stop charging`);
     node_notifier_1.default.notify({
         title: 'Stop charging',
         message: `${level * 100}%`,
@@ -63,6 +67,7 @@ const startCharging = (level, chargingStatus) => __awaiter(void 0, void 0, void 
         return;
     }
     yield send(true);
+    console.log(`${new Date()} start charging`);
     node_notifier_1.default.notify({
         title: 'Battery status',
         message: `${level * 100}%`,
@@ -74,6 +79,7 @@ const check = () => __awaiter(void 0, void 0, void 0, function* () {
             battery_level_1.default(),
             is_charging_1.default(),
         ]);
+        console.log(`${new Date()}: checking, batteryLevel: ${level}, isCharging: ${chargingStatus}`);
         if (level <= 0.4) {
             return startCharging(level, chargingStatus);
         }
@@ -82,11 +88,14 @@ const check = () => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
     catch (err) {
+        console.error(`${new Date()}: check err`);
+        console.error(err.message);
         node_notifier_1.default.notify({
             title: 'Error',
             message: err.message,
         });
     }
 });
+console.log(`${new Date()}: start`);
 setInterval(() => check(), 60 * 1000);
 //# sourceMappingURL=index.js.map

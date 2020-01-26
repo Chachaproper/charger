@@ -1,13 +1,18 @@
 import http, { RequestOptions } from 'http'
 import qs from 'querystring'
+import env from 'dotenv'
 import nodeNotifier from 'node-notifier'
 import batteryLevel from 'battery-level'
 import isCharging from 'is-charging'
 
-const IP = '192.168.88.229'
-const PORT = 80
-const USER = 'user'
-const PASSWORD = 'password'
+env.config();
+
+const IP = process.env.HOST || '192.168.88.229'
+const PORT = process.env.PORT || 80
+const LOGIN = process.env.LOGIN || 'user'
+const PASSWORD = process.env.PASSWORD || 'password'
+
+console.log(IP, PORT, LOGIN, PASSWORD);
 
 const send = (enabled: boolean = false): Promise<any> => {
   const body =  qs.encode({ btnpwr: enabled ? 'on' : 'off' })
@@ -19,7 +24,7 @@ const send = (enabled: boolean = false): Promise<any> => {
     method: 'POST',
     headers: {
       'Content-Length': body.length,
-      'Authorization': `Basic ${new Buffer(`${USER}:${PASSWORD}`).toString('base64')}`,
+      'Authorization': `Basic ${new Buffer(`${LOGIN}:${PASSWORD}`).toString('base64')}`,
     },
   }
 
@@ -49,6 +54,8 @@ const stopCharging = async (level: number, chargingStatus: boolean) => {
 
   await send(false)
 
+  console.log(`${new Date()} stop charging`);
+
   nodeNotifier.notify({
     title: 'Stop charging',
     message: `${level * 100}%`,
@@ -61,6 +68,8 @@ const startCharging = async (level: number, chargingStatus: boolean) => {
   }
 
   await send(true)
+
+  console.log(`${new Date()} start charging`);
 
   nodeNotifier.notify({
     title: 'Battery status',
@@ -76,6 +85,8 @@ const check = async () => {
       isCharging(),
     ])
 
+    console.log(`${new Date()}: checking, batteryLevel: ${level}, isCharging: ${chargingStatus}`);
+
     if (level <= 0.4) {
       return startCharging(level, chargingStatus)
     }
@@ -84,11 +95,16 @@ const check = async () => {
       return stopCharging(level, chargingStatus)
     }
   } catch (err) {
+    console.error(`${new Date()}: check err`);
+    console.error(err.message);
+
     nodeNotifier.notify({
       title: 'Error',
       message: err.message,
     })
   }
 }
+
+console.log(`${new Date()}: start`);
 
 setInterval(() => check(), 60 * 1000)

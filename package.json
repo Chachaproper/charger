@@ -11,9 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "battery-level": "3.0.0",
+    "dotenv": "8.2.0",
     "is-charging": "2.0.0",
     "node-notifier": "6.0.0",
-    "typescript": "3.7.4"
+    "typescript": "3.7.5"
   },
   "devDependencies": {
     "@types/battery-level": "3.0.0",
