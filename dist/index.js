@@ -23,7 +23,8 @@ const IP = process.env.HOST || '192.168.88.229';
 const PORT = process.env.PORT || 80;
 const LOGIN = process.env.LOGIN || 'user';
 const PASSWORD = process.env.PASSWORD || 'password';
-console.log(IP, PORT, LOGIN, PASSWORD);
+const MAX_CHARGE = process.env.MAX_CHARGE && parseFloat(process.env.MAX_CHARGE) || 0.8;
+const MIN_CHARGE = process.env.MIN_CHARGE && parseFloat(process.env.MIN_CHARGE) || 0.2;
 const send = (enabled = false) => {
     const body = querystring_1.default.encode({ btnpwr: enabled ? 'on' : 'off' });
     const options = {
@@ -80,10 +81,10 @@ const check = () => __awaiter(void 0, void 0, void 0, function* () {
             is_charging_1.default(),
         ]);
         console.log(`${new Date()}: checking, batteryLevel: ${level}, isCharging: ${chargingStatus}`);
-        if (level <= 0.4) {
+        if (level <= MIN_CHARGE) {
             return startCharging(level, chargingStatus);
         }
-        if (level >= 0.8) {
+        if (level >= MAX_CHARGE) {
             return stopCharging(level, chargingStatus);
         }
     }

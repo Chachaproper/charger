@@ -5,17 +5,17 @@ import nodeNotifier from 'node-notifier'
 import batteryLevel from 'battery-level'
 import isCharging from 'is-charging'
 
-env.config();
+env.config()
 
 const IP = process.env.HOST || '192.168.88.229'
 const PORT = process.env.PORT || 80
 const LOGIN = process.env.LOGIN || 'user'
 const PASSWORD = process.env.PASSWORD || 'password'
-
-console.log(IP, PORT, LOGIN, PASSWORD);
+const MAX_CHARGE = process.env.MAX_CHARGE && parseFloat(process.env.MAX_CHARGE) || 0.8
+const MIN_CHARGE = process.env.MIN_CHARGE && parseFloat(process.env.MIN_CHARGE) || 0.2
 
 const send = (enabled: boolean = false): Promise<any> => {
-  const body =  qs.encode({ btnpwr: enabled ? 'on' : 'off' })
+  const body = qs.encode({ btnpwr: enabled ? 'on' : 'off' })
 
   const options: RequestOptions = {
     hostname: IP,
@@ -54,7 +54,7 @@ const stopCharging = async (level: number, chargingStatus: boolean) => {
 
   await send(false)
 
-  console.log(`${new Date()} stop charging`);
+  console.log(`${new Date()} stop charging`)
 
   nodeNotifier.notify({
     title: 'Stop charging',
@@ -69,7 +69,7 @@ const startCharging = async (level: number, chargingStatus: boolean) => {
 
   await send(true)
 
-  console.log(`${new Date()} start charging`);
+  console.log(`${new Date()} start charging`)
 
   nodeNotifier.notify({
     title: 'Battery status',
@@ -85,18 +85,18 @@ const check = async () => {
       isCharging(),
     ])
 
-    console.log(`${new Date()}: checking, batteryLevel: ${level}, isCharging: ${chargingStatus}`);
+    console.log(`${new Date()}: checking, batteryLevel: ${level}, isCharging: ${chargingStatus}`)
 
-    if (level <= 0.4) {
+    if (level <= MIN_CHARGE) {
       return startCharging(level, chargingStatus)
     }
 
-    if (level >= 0.8) {
+    if (level >= MAX_CHARGE) {
       return stopCharging(level, chargingStatus)
     }
   } catch (err) {
-    console.error(`${new Date()}: check err`);
-    console.error(err.message);
+    console.error(`${new Date()}: check err`)
+    console.error(err.message)
 
     nodeNotifier.notify({
       title: 'Error',
@@ -105,6 +105,6 @@ const check = async () => {
   }
 }
 
-console.log(`${new Date()}: start`);
+console.log(`${new Date()}: start`)
 
 setInterval(() => check(), 60 * 1000)
